@@ -11,11 +11,28 @@
             </li>
           </ul>
         </div>
+    {% if flag == true %}
+    <div class="card-header">
+        <h2>{{ titulo }}</h2>
+        <div style="margin: 10px 100px 10px 100px;">
+        {% if tipo_menu == 'marca' %}
+            {% for marca in lista %}
+                <li><a href="/marcas/{{ marca[0] }}">{{ marca[0] }}</a></li>
+            {% endfor %}
+        {% else %}
+            {% for modelo in lista %}
+                <li><a href="/categorias/{{ modelo[0] }}">{{ modelo[0] }}</a></li>
+            {% endfor %}
+        {% endif %}
+        </div>
+    </div>
+    {% else %}
         <div class="card-body">
             <center>
                 <img src="data:image/png;base64,{{imagen.imagen}}">
             </center>
         </div>
+    {% endif %}
       </div>
 
 

@@ -78,14 +78,13 @@ def populate_db():  # put application's code here
 @app.route('/marcas')
 def read_marcas():
     con = sqlite3.connect("./info/autocosmos.db")
-    cursor = con.cursor()
     df = total_por_marca(con)
     con.close()
 
     img = io.BytesIO()
     # grafico de barras
     plt.clf()
-    plt.title("Total de vehiculos catalogados por fabricante", fontsize=25, fontweight='bold', color='blue', loc='center', style='italic')
+    plt.title("Total de vehículos catalogados por fabricante", fontsize=25, fontweight='bold', color='blue', loc='center', style='italic')
     lista = df.values.tolist()
     for i in range(len(lista)):
         plt.barh(lista[i][0], lista[i][1])
@@ -93,67 +92,81 @@ def read_marcas():
     plt.savefig(img, format='png', dpi=90)
     img.seek(0)
     plot_url = base64.b64encode(img.getvalue()).decode()
-    return render_template('grafica.html', imagen={'imagen': plot_url})
+    return render_template('grafica.html', imagen={'imagen': plot_url}, flag=False)
 
 @app.route('/categorias')
 def read_categorias():
     con = sqlite3.connect("./info/autocosmos.db")
-    cursor = con.cursor()
     df = total_por_categoria(con)
     con.close()
 
     img = io.BytesIO()
     # grafico de torta
     plt.clf()
-    plt.title("Distribución de vehiculos por segmentos", fontsize=25, fontweight='bold', color='blue', loc='center', style='italic')
+    plt.title("Distribución de vehículos por segmentos", fontsize=25, fontweight='bold', color='blue', loc='center', style='italic')
     plt.pie(df['cantidad'].tolist(), labels=df['tipo'].tolist(), autopct='%1.1f%%')
     plt.gcf().set_size_inches(12, 10)
     plt.savefig(img, format='png', dpi=80)
     img.seek(0)
     plot_url = base64.b64encode(img.getvalue()).decode()
-    return render_template('grafica.html', imagen={'imagen': plot_url})
+    return render_template('grafica.html', imagen={'imagen': plot_url}, flag=False)
 
 
 @app.route('/categorias/<modelo>')
 def read_categorias_modelo(modelo):
+
     con = sqlite3.connect("./info/autocosmos.db")
     cursor = con.cursor()
-    df = precio_por_categoria(con, str(modelo))
-    con.close()
-
-    img = io.BytesIO()
-    # grafico de puntos
-    plt.clf()
-    plt.title("Precios de modelos para el segmento " + str(modelo) +" (U$s)", fontsize=25, fontweight='bold', color='blue', loc='center', style='italic')
-    plt.scatter(df['precio'], df['marca'], color='brown')
-    plt.tick_params(axis='x', rotation=45)
-    plt.gcf().set_size_inches(20, 10)
-    plt.savefig(img, format='png', dpi=80)
-    img.seek(0)
-    plot_url = base64.b64encode(img.getvalue()).decode()
-    return render_template('grafica.html', imagen={'imagen': plot_url})
+    is_url = valida_modelo(cursor, modelo)
+    listado = lista_modelos(cursor)
+    if is_url == 0:
+        menu = True
+        imagen = ''
+    else:
+        menu = False
+        df = precio_por_categoria(con, str(modelo))
+        con.close()
+        img = io.BytesIO()
+        # grafico de puntos
+        plt.clf()
+        plt.title("Precios de modelos para el segmento " + str(modelo) +" (U$s)", fontsize=25, fontweight='bold', color='blue', loc='center', style='italic')
+        plt.scatter(df['precio'], df['marca'], color='brown')
+        plt.tick_params(axis='x', rotation=45)
+        plt.gcf().set_size_inches(20, 10)
+        plt.savefig(img, format='png', dpi=80)
+        img.seek(0)
+        plot_url = base64.b64encode(img.getvalue()).decode()
+        imagen = {'imagen': plot_url}
+    return render_template('grafica.html', imagen=imagen, flag=menu, titulo='Seleccione una categoria', lista=listado, tipo_menu='modelo')
 
 
 @app.route('/marcas/<marca>')
 def read_precio_marca(marca):
     con = sqlite3.connect("./info/autocosmos.db")
     cursor = con.cursor()
-    df = precio_por_marca(con, str(marca))
-    con.close()
-
-    img = io.BytesIO()
-    # grafico de puntos
-    plt.clf()
-    plt.title("Precios de modelos para el fabricante " + str(marca) +" (U$s)", fontsize=25, fontweight='bold', color='blue', loc='center', style='italic')
-    plt.plot(df['precio'], df['modelo'], color='r')
-    plt.tick_params(axis='x', rotation=45)
-    plt.gcf().set_size_inches(20, 10)
-    plt.savefig(img, format='png', dpi=80)
-    img.seek(0)
-    plot_url = base64.b64encode(img.getvalue()).decode()
-    return render_template('grafica.html', imagen={'imagen': plot_url})
+    is_url = valida_marca(cursor, marca)
+    listado = lista_marcas(cursor)
+    if is_url == 0:
+        menu = True
+        imagen = ''
+    else:
+        menu = False
+        df = precio_por_marca(con, str(marca))
+        con.close()
+        img = io.BytesIO()
+        # grafico de puntos
+        plt.clf()
+        plt.title("Precios de modelos para el fabricante " + str(marca) +" (U$s)", fontsize=25, fontweight='bold', color='blue', loc='center', style='italic')
+        plt.plot(df['precio'], df['modelo'], color='r')
+        plt.tick_params(axis='x', rotation=45)
+        plt.gcf().set_size_inches(20, 10)
+        plt.savefig(img, format='png', dpi=80)
+        img.seek(0)
+        plot_url = base64.b64encode(img.getvalue()).decode()
+        imagen = {'imagen': plot_url}
+    return render_template('grafica.html', imagen=imagen, flag=menu, titulo='Seleccione un fabricante', lista=listado, tipo_menu='marca')
 
 
 
 if __name__ == '__main__':
-    app.run(debug = True)
+    app.run(debug = False)

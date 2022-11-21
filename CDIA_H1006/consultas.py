@@ -34,6 +34,29 @@ def consulta_marca(cursor, marca):
     return cursor.fetchone()[0]
 
 
+def valida_marca(cursor, marca):
+    cursor.execute('SELECT count(*) FROM marcas where nombre = ?;', [marca])
+    return cursor.fetchone()[0]
+
+
+def valida_modelo(cursor, modelo):
+    cursor.execute('select count(*) from autos where tipo = ?;', [modelo])
+    return cursor.fetchone()[0]
+
+
+def lista_marcas(cursor):
+    cursor.execute('''select DISTINCT m.nombre 
+                        from autos a join marcas m on a.marca_id =m.id 
+                        where a.precio > 0 
+                        ORDER by 1;''')
+    return cursor.fetchall()
+
+
+def lista_modelos(cursor):
+    cursor.execute('select DISTINCT a.tipo from autos a ORDER by 1;')
+    return cursor.fetchall()
+
+
 def insert_auto(cursor, datos):
     cursor.executemany('insert into autos (marca_id, modelo, moneda, precio, tipo, sub_tipo, origen, url_img) values (?, ?, ?, ?, ?, ?, ?, ?)', [info for info in datos])
     cursor.connection.commit()
